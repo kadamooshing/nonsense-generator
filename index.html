@@ -1,187 +1,193 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<meta name="theme-color" content="#111111" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="廢話生成器" />
-<link rel="manifest" href="manifest.webmanifest" />
-<link rel="apple-touch-icon" href="icon-192.png" />
-<title>廢話文學生成器</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f0f10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="九天廢話">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<title>九天廢話文學生成器</title>
 <style>
-:root{--bg:#0f0f10;--card:#19191c;--muted:#9a9aa1;--text:#f5f5f7;--line:#2b2b30;--accent:#ffffff;--danger:#ff6b6b}
+:root{--bg:#0f0f10;--card:#19191c;--muted:#9a9aa1;--text:#f5f5f7;--line:#2b2b30;--accent:#fff}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC",sans-serif}
-.app{max-width:720px;margin:0 auto;padding:18px 14px calc(28px + env(safe-area-inset-bottom))}
-.header{padding:8px 2px 16px}.header h1{margin:0;font-size:28px;letter-spacing:-.5px}.header p{margin:7px 0 0;color:var(--muted);font-size:14px;line-height:1.45}
+.app{max-width:720px;margin:auto;padding:18px 14px calc(28px + env(safe-area-inset-bottom))}
+.header{padding:8px 2px 16px}.header h1{margin:0;font-size:28px}.badge{font-size:11px;background:#fff;color:#111;padding:3px 7px;border-radius:999px;vertical-align:middle}
+.header p,.small{color:var(--muted);font-size:13px;line-height:1.5}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
-label{display:block;font-size:13px;color:var(--muted);margin:0 0 8px}
-textarea,input,select{width:100%;border:1px solid var(--line);background:#111114;color:var(--text);border-radius:14px;font-size:17px;padding:13px 14px;outline:none}
-textarea{min-height:86px;resize:none;line-height:1.45}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+textarea{width:100%;min-height:92px;resize:none;border:1px solid var(--line);background:#111114;color:var(--text);border-radius:14px;font-size:17px;padding:13px 14px;outline:none;line-height:1.5}
+.chips{display:flex;gap:8px;overflow:auto;padding:2px 0}.chip{white-space:nowrap;background:#232328;border:1px solid #303036;color:#ddd;padding:9px 11px;border-radius:999px;font-size:13px;font-weight:700}.chip.active{background:#f1f1f3;color:#111}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
 button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:700;cursor:pointer}
 .primary{width:100%;background:var(--accent);color:#111;margin-top:12px;font-size:18px;padding:15px}
-.secondary{background:#27272c;color:var(--text);border:1px solid #34343a}
-.ghost{background:#202024;color:var(--text);border:1px solid #303036}
-.output{display:flex;flex-direction:column;gap:10px}
-.result{background:#111114;border:1px solid var(--line);border-radius:16px;padding:14px}
-.resultText{font-size:17px;line-height:1.6;white-space:pre-wrap;margin-bottom:12px}
-.actions{display:flex;gap:8px}.actions button{flex:1;padding:10px 12px;font-size:14px}
-.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(18px);background:#fff;color:#111;padding:10px 14px;border-radius:999px;font-weight:700;opacity:0;pointer-events:none;transition:.18s;z-index:9}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-.chips{display:flex;gap:8px;overflow:auto;padding-bottom:2px}.chip{white-space:nowrap;background:#232328;border:1px solid #303036;color:#ddd;padding:9px 11px;border-radius:999px;font-size:13px;font-weight:700}.chip.active{background:#f1f1f3;color:#111}
-.small{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.45}
-.footer{color:#777;font-size:12px;text-align:center;padding:10px 0 0}
-@media (max-width:430px){.app{padding-left:12px;padding-right:12px}.header h1{font-size:25px}.row{grid-template-columns:1fr 1fr}.resultText{font-size:16px}}
+.secondary{background:#27272c;color:var(--text);border:1px solid #34343a}.ghost{background:#202024;color:var(--text);border:1px solid #303036}
+.output{display:flex;flex-direction:column;gap:10px}.result{background:#111114;border:1px solid var(--line);border-radius:16px;padding:14px}
+.resultText{font-size:17px;line-height:1.65;white-space:pre-wrap;margin-bottom:12px}.actions{display:flex;gap:8px}.actions button{flex:1;padding:10px;font-size:14px}
+.keywords{margin-top:10px;color:#777;font-size:12px}.toast{position:fixed;left:50%;bottom:25px;transform:translateX(-50%) translateY(18px);background:#fff;color:#111;padding:10px 14px;border-radius:999px;font-weight:700;opacity:0;transition:.18s}.toast.show{opacity:1;transform:translateX(-50%)}
+.footer{color:#777;font-size:12px;text-align:center;padding:8px}
 </style>
 </head>
 <body>
 <div class="app">
-  <div class="header">
-    <h1>廢話文學生成器</h1>
-    <p>貼一句話、輸入主題，0.5 秒內生成 3 句。全離線，不需要模型。</p>
+ <div class="header"><h1>九天廢話文學生成器 <span class="badge">V2</span></h1><p>語意拆詞＋多邏輯骨架＋近期去重。全離線，不需要模型。</p></div>
+ <div class="card">
+  <label>對方原話／主題</label><textarea id="topic" placeholder="貼上對方原話……"></textarea>
+  <label style="margin-top:12px">風格</label>
+  <div class="chips" id="chips">
+   <button class="chip active" data-style="normal">經典廢</button><button class="chip" data-style="argue">回嘴廢</button>
+   <button class="chip" data-style="philo">哲學廢</button><button class="chip" data-style="science">研究廢</button>
+   <button class="chip" data-style="mystic">高深廢</button><button class="chip" data-style="romance">浪漫廢</button>
+   <button class="chip" data-style="god">神級廢</button>
   </div>
-
-  <div class="card">
-    <label for="topic">對方原話／主題</label>
-    <textarea id="topic" placeholder="例如：你整天研究這些賺到錢了嗎？"></textarea>
-
-    <label style="margin-top:12px">風格</label>
-    <div class="chips" id="chips">
-      <button class="chip active" data-style="normal">經典廢</button>
-      <button class="chip" data-style="philo">哲學廢</button>
-      <button class="chip" data-style="argue">回嘴廢</button>
-      <button class="chip" data-style="science">研究廢</button>
-      <button class="chip" data-style="mystic">高深廢</button>
-    </div>
-
-    <div class="row">
-      <button class="secondary" id="sampleBtn">換個範例</button>
-      <button class="ghost" id="clearBtn">清空</button>
-    </div>
-    <button class="primary" id="generateBtn">生成 3 句</button>
-    <div class="small">提示：完全在手機瀏覽器本機運作。加入主畫面後可當成小 App 使用。</div>
-  </div>
-
-  <div class="card">
-    <label>生成結果</label>
-    <div class="output" id="output"></div>
-  </div>
-
-  <div class="footer">廢話的最高境界：句句成立，毫無幫助。</div>
-</div>
-<div class="toast" id="toast">已複製</div>
-
+  <div class="row"><button class="secondary" id="sampleBtn">換個範例</button><button class="ghost" id="clearBtn">清空</button></div>
+  <button class="primary" id="generateBtn">生成 3 句</button>
+  <div class="keywords" id="keywords"></div>
+ </div>
+ <div class="card"><label>生成結果</label><div class="output" id="output"></div></div>
+ <div class="footer">V2：盡量針對原句廢，不再只是把整句塞進模板。</div>
+</div><div class="toast" id="toast">已複製</div>
 <script>
-const topicEl = document.getElementById('topic');
-const output = document.getElementById('output');
-const toast = document.getElementById('toast');
-let style = 'normal';
+const $=id=>document.getElementById(id), topicEl=$('topic'), output=$('output'), toast=$('toast'), keywordsEl=$('keywords');
+let style='normal'; const recent=new Set(); const recentOrder=[];
 
-const samples = [
-  '你整天研究這些賺到錢了嗎？',
-  '你是不是有病？',
-  '你到底在講什麼？',
-  '你怎麼又熬夜？',
-  '你這樣做有什麼意義？',
-  '你是不是想太多了？',
-  '你到底懂不懂？',
-  '你為什麼不早點說？'
+const samples=[
+'你整天研究這些賺到錢了嗎？','你是不是有病？','你到底在講什麼？',
+'我忘記了，你那個繩子不夠力，頭放下去結果身體扯斷了',
+'馬賽克打好了，不用謝我','躲好，子彈飛啊飛的',
+'走在香水雨裡，濕的是我的身，思的是你的人',
+'情愛是互相吸引，互相吸引又是為了什麼？'
 ];
 
-const generic = {
- normal: [
-  '如果你現在在問「{q}」，至少可以確定，你確實問了這個問題。',
-  '這件事之所以會變成這樣，主要是因為它最後真的變成了這樣。',
-  '如果結果還沒出來，那目前最大的結果就是還沒有結果。',
-  '你說得很有道理，尤其是有道理的那一部分。',
-  '能遇到這種情況，通常代表這種情況確實發生了。',
-  '事情到底是不是這樣，最後還是要看它到底是不是這樣。',
-  '如果我沒理解錯，那我目前的理解應該還沒有完全錯。'
- ],
- philo: [
-  '真正的答案，往往藏在答案出現之後。至於「{q}」，你現在已經開始接近問題本身。',
-  '當你開始追問「{q}」，你首先得到的，就是一個正在追問的人。',
-  '不是所有問題都有答案，但有答案的問題通常都曾經是問題。',
-  '你以為你在尋找結論，其實你至少已經找到了尋找結論這件事。',
-  '放下問題之前，問題通常還在；放下之後，至少手上少了一個問題。',
-  '有些道理一旦懂了，你就會發現自己懂了。沒懂之前，通常還不懂。'
- ],
- argue: [
-  '你要這麼理解當然可以，因為你現在確實就是這麼理解的。',
-  '我沒有迴避「{q}」，我只是還沒有用你期待的方式回答它。',
-  '你先別急，急了之後通常只會比現在更急。',
-  '我尊重你的看法，畢竟這確實是你的看法，不是我的。',
-  '你說我沒回答也不算錯，因為我確實還沒有回答成你想要的答案。',
-  '如果你堅持你是對的，那至少可以確定，你現在非常堅持。',
-  '你問得很好，下次如果還想問，也可以再問一次。'
- ],
- science: [
-  '根據長期觀察，會問「{q}」的人，通常都已經把這句話問出口了。',
-  '研究顯示，問題沒有解決之前，問題的未解決率通常偏高。',
-  '統計上來說，事情一旦發生，發生率就會明顯高於沒發生之前。',
-  '實驗發現，只要沒有得到答案，受試者通常仍然處於沒有得到答案的狀態。',
-  '目前沒有證據證明這件事沒發生，尤其是在它已經發生的情況下。',
-  '多項觀察指出，知道的人通常知道，不知道的人知道的比例相對較低。'
- ],
- mystic: [
-  '你看到的未必只是你看到的，但你沒看到的，目前確實沒有被你看到。',
-  '「{q}」真正的答案不在遠方，它首先存在於這個問題已經被說出口的事實裡。',
-  '當你凝視問題，問題也仍然是一個問題。',
-  '真正的沉默不是沒有聲音，而是沒有把話說出來。',
-  '你若執著答案，答案就是答案；你若放下答案，至少你先放下了一個答案。',
-  '萬事皆有因果，有結果的事情，通常至少已經有了結果。'
- ]
-};
+const stop = new Set('我你妳他她它我們你們他們這那這個那個一個一些就是只是但是不過因為所以如果然後結果現在目前已經還是沒有不是可以可能真的其實到底怎麼什麼為什麼一下這樣那樣的了嗎呢啊呀喔哦吧在有又都也很太再就把被讓跟和與或而才會能要想說講問看做去來上下一樣時候事情問題地方'.split(''));
 
-function compact(s){return s.replace(/\s+/g,' ').trim();}
-function q(s){return compact(s).replace(/[。！？!?]+$/,'') || '這件事';}
-function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
-function shuffle(arr){return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);}
+const lexicon = [
+'香水雨','街燈','浪漫','芬芳','氣息','心裡','心裏','淋濕','淋溼','洗淨','婚姻','契約','情愛','吸引',
+'繩子','不夠力','頭','身體','扯斷','子彈','飛','躲好','馬賽克','研究','賺錢','神助','力量','經典','感應','板規',
+'熬夜','喝水','胃口','困難','背後','生病','答案','問題','時間','成功','失敗','離開','回來','忘記','記得'
+];
 
+function clean(s){return (s||'').replace(/\s+/g,' ').trim().replace(/[。！？!?]+$/,'')}
+function extract(raw){
+ const s=clean(raw); let found=[];
+ lexicon.sort((a,b)=>b.length-a.length).forEach(w=>{if(s.includes(w)&&!found.includes(w)) found.push(w)});
+ let chunks=s.split(/[，,。；;：:、！？!?（）()\s]+/).map(x=>x.trim()).filter(x=>x.length>=2&&x.length<=12);
+ chunks.forEach(c=>{
+   c=c.replace(/^(可是|但是|不過|所以|因為|如果|然後|結果|其實|我覺得|我希望)/,'');
+   if(c.length>=2&&!stop.has(c)&&!found.includes(c)) found.push(c);
+ });
+ // character bigrams/trigrams as fallback
+ if(found.length<3){
+   const t=s.replace(/[^\u4e00-\u9fffA-Za-z0-9]/g,'');
+   for(let n=4;n>=2&&found.length<5;n--) for(let i=0;i+n<=t.length&&found.length<5;i++){
+     let w=t.slice(i,i+n); if(!stop.has(w)&&!found.some(x=>x.includes(w)||w.includes(x))) found.push(w);
+   }
+ }
+ return found.slice(0,6);
+}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function pair(k){return [k[0]||'這件事',k[1]||k[0]||'這件事',k[2]||k[1]||k[0]||'這件事']}
+function addRecent(x){recent.add(x);recentOrder.push(x);while(recentOrder.length>35){recent.delete(recentOrder.shift())}}
+function chooseUnique(builders, ctx){
+ for(let i=0;i<40;i++){let x=pick(builders)(ctx); if(!recent.has(x)){addRecent(x);return x}}
+ let x=pick(builders)(ctx); addRecent(x); return x;
+}
+
+const B={
+normal:[
+ c=>`${c.a}之所以會變成${c.a}，主要是因為它最後確實跟${c.a}有關。`,
+ c=>`如果${c.a}還沒發生，那它目前就是還沒發生；一旦發生了，至少就不能再說它完全沒發生。`,
+ c=>`${c.a}最大的特色，就是它跟${c.a}本身脫不了關係；至於${c.b}，至少也參與了整件事。`,
+ c=>`先不談${c.c}，光是${c.a}和${c.b}同時出現在這句話裡，就已經證明它們確實一起出現過。`,
+ c=>`事情到了${c.a}這一步，最明顯的變化就是：現在已經到了${c.a}這一步。`,
+ c=>`能把${c.a}說到${c.b}的人，通常至少已經把${c.a}和${c.b}說在同一句話裡。`
+],
+argue:[
+ c=>`你先別急著談${c.b}，因為${c.a}如果都還沒講完，${c.b}再急也只能先在後面等。`,
+ c=>`你要把${c.a}理解成${c.b}當然可以，至少現在最確定的，就是你真的這樣理解了。`,
+ c=>`我沒有迴避${c.a}，我只是把${c.a}放在一個看起來很像被迴避的位置。`,
+ c=>`你問${c.a}有沒有道理，我只能說：有道理的部分確實有道理，沒道理的部分目前還比較沒道理。`,
+ c=>`如果${c.a}真的能證明${c.b}，那很好；如果不能，至少它證明了你很想用${c.a}證明${c.b}。`,
+ c=>`你可以不同意${c.a}，但你不同意之前，${c.a}至少已經成功讓你不同意了一次。`
+],
+philo:[
+ c=>`人總以為自己在追問${c.a}，其實追到最後，首先找到的是那個一直在追問${c.a}的人。`,
+ c=>`${c.a}若沒有${c.b}，也許只是${c.a}；有了${c.b}之後，它至少成了有${c.b}的${c.a}。`,
+ c=>`放下${c.a}之前，${c.a}通常還在；真正放下之後，至少手上不必再一直拿著它。`,
+ c=>`我們以為${c.a}通往${c.b}，後來才發現，走到${c.b}之前，路上仍然都是還沒到${c.b}的地方。`,
+ c=>`真正值得思考的不是${c.a}為什麼是${c.a}，而是當你開始思考時，${c.a}已經成了被思考的${c.a}。`,
+ c=>`${c.a}會過去，${c.b}也會過去；等它們都過去以後，留下來的至少是它們曾經來過。`
+],
+science:[
+ c=>`根據長期觀察，${c.a}一旦和${c.b}同時出現，兩者同時出現的機率會明顯高於它們沒有同時出現的時候。`,
+ c=>`實驗顯示，${c.a}沒有解決之前，${c.a}的未解決率通常偏高；加入${c.b}後，情況至少多了一個${c.b}。`,
+ c=>`目前沒有證據證明${c.a}與${c.b}毫無關係，尤其是在它們已經被放進同一句話的情況下。`,
+ c=>`統計指出，提到${c.a}的人通常比完全沒提到${c.a}的人，更容易在句子裡出現${c.a}。`,
+ c=>`研究人員發現，只要${c.a}真的發生，受試者處於「${c.a}已發生」狀態的比例會快速上升。`,
+ c=>`初步數據顯示，${c.b}能不能造成${c.a}仍待研究，但${c.a}如果已經發生，至少樣本數已經不是零。`
+],
+mystic:[
+ c=>`你看到的是${c.a}，想到的是${c.b}；但真正被你看到的，首先仍然是你正在看見${c.a}。`,
+ c=>`${c.a}不是答案，${c.b}也不是答案；可當你把它們放在一起，至少問題突然變得比較像有兩個關鍵詞。`,
+ c=>`當${c.a}出現時，不必追問它從哪裡來；因為在你追問以前，它至少已經先出現了。`,
+ c=>`萬事皆有因果，${c.a}若是因，${c.b}未必是果；但如果${c.b}真成了果，那它至少已經結果了。`,
+ c=>`真正的${c.a}不在遠方，它就在${c.a}存在的地方；你若找不到，至少目前還沒找到。`,
+ c=>`你以為自己放不下${c.a}，其實也可能只是${c.a}目前還沒有被你放下。`
+],
+romance:[
+ c=>`${c.a}落在身上是${c.a}，落進心裡就成了想念；至於${c.b}，因為想的是你，所以怎麼繞最後還是繞回你。`,
+ c=>`我沒有躲開${c.a}，因為躲開了就碰不到${c.a}；碰不到${c.a}，又怎麼帶著它去靠近${c.b}。`,
+ c=>`濕的是我的身，留的是${c.a}；我以為自己走向${c.b}，後來才發現，真正一直沒離開的是心裡那個你。`,
+ c=>`${c.a}可以洗掉氣息，卻洗不掉想念；如果最後真的走進${c.b}，至少證明這一路沒有完全白走。`,
+ c=>`浪漫不是${c.a}本身，而是${c.a}發生的時候，我剛好還在想你；不然它頂多只是一場${c.a}。`,
+ c=>`我把${c.a}留給夜色，把${c.b}留給心裡；如果你問剩下什麼，剩下的就是還沒說完的那一點想你。`
+],
+god:[
+ c=>`${c.a}最大的問題就是${c.a}；等${c.b}真的發生以後，你就會發現——現在討論${c.a}其實已經有點晚了。`,
+ c=>`先有${c.a}，再有${c.b}，最後得到一個重要結論：沒有前面的事，後面的事至少不會用同樣的方式發生。`,
+ c=>`我本來沒想到${c.a}，直到${c.b}出現，我才明白——有些事情不知道的時候，確實比較不知道。`,
+ c=>`別小看${c.a}，它只要成功一次，就能把「還沒發生」直接變成「剛剛發生過」。`,
+ c=>`${c.a}跟${c.b}誰比較重要我不知道，但可以確定：少了其中一個，這句廢話會短很多。`,
+ c=>`如果最後${c.a}還是沒能解決${c.b}，至少我們成功用${c.a}證明了${c.b}依然需要被解決。`
+]};
+
+function context(raw){
+ const k=extract(raw), [a,b,c]=pair(k);
+ keywordsEl.textContent='抓到的關鍵：'+k.join('・');
+ return {raw:clean(raw)||'這件事',k,a,b,c};
+}
+function generateOne(ctx){return chooseUnique(B[style],ctx)}
 function generate(){
-  const raw = q(topicEl.value);
-  const pool = shuffle(generic[style]);
-  const results = [];
-  for(let i=0;i<3;i++) results.push(pool[i % pool.length].replaceAll('{q}', raw));
-  render(results);
+ const ctx=context(topicEl.value);
+ const arr=[]; while(arr.length<3){let x=generateOne(ctx); if(!arr.includes(x))arr.push(x)}
+ render(arr,ctx);
 }
-
-function render(items){
-  output.innerHTML='';
-  items.forEach((text,idx)=>{
-    const box=document.createElement('div'); box.className='result';
-    const t=document.createElement('div'); t.className='resultText'; t.textContent=text;
-    const a=document.createElement('div'); a.className='actions';
-    const copy=document.createElement('button'); copy.className='secondary'; copy.textContent='複製這句';
-    copy.onclick=()=>copyText(text);
-    const again=document.createElement('button'); again.className='ghost'; again.textContent='換一句';
-    again.onclick=()=>{ const next=pick(generic[style]).replaceAll('{q}',q(topicEl.value)); t.textContent=next; copy.onclick=()=>copyText(next); };
-    a.append(copy,again); box.append(t,a); output.append(box);
-  });
+function render(items,ctx){
+ output.innerHTML='';
+ items.forEach(text=>{
+  const box=document.createElement('div');box.className='result';
+  const t=document.createElement('div');t.className='resultText';t.textContent=text;
+  const a=document.createElement('div');a.className='actions';
+  const cp=document.createElement('button');cp.className='secondary';cp.textContent='複製這句';
+  const ag=document.createElement('button');ag.className='ghost';ag.textContent='換一句';
+  const bind=x=>{cp.onclick=()=>copyText(x);ag.onclick=()=>{let n=generateOne(ctx);t.textContent=n;bind(n)}};
+  bind(text);a.append(cp,ag);box.append(t,a);output.append(box);
+ });
 }
-
 async function copyText(text){
-  try{await navigator.clipboard.writeText(text);}catch(e){
-    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
-  }
-  toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),900);
+ try{await navigator.clipboard.writeText(text)}catch(e){let ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove()}
+ toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),900)
 }
+$('generateBtn').onclick=generate;
+$('clearBtn').onclick=()=>{topicEl.value='';keywordsEl.textContent='';output.innerHTML='';topicEl.focus()};
+$('sampleBtn').onclick=()=>{topicEl.value=pick(samples);generate()};
+$('chips').addEventListener('click',e=>{if(!e.target.classList.contains('chip'))return;document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));e.target.classList.add('active');style=e.target.dataset.style;generate()});
+topicEl.value='我忘記了，你那個繩子不夠力，頭放下去結果身體扯斷了';generate();
 
-document.getElementById('generateBtn').onclick=generate;
-document.getElementById('clearBtn').onclick=()=>{topicEl.value='';topicEl.focus();};
-document.getElementById('sampleBtn').onclick=()=>{topicEl.value=pick(samples);generate();};
-document.getElementById('chips').addEventListener('click',e=>{if(!e.target.classList.contains('chip'))return;document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));e.target.classList.add('active');style=e.target.dataset.style;generate();});
-topicEl.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')generate();});
-
-topicEl.value='你整天研究這些賺到錢了嗎？';
-generate();
-</script>
-<script>
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){
+ window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
-</script>
-</body>
-</html>
+</script></body></html>

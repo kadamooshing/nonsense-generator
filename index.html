@@ -35,11 +35,13 @@ button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:
  .chip{padding:9px 4px;font-size:12px}
  .header h1{font-size:27px}
 }
+
+.strategy{display:inline-block;margin-bottom:8px;padding:4px 9px;border:1px solid #3a3a42;border-radius:999px;font-size:12px;color:#aaa}
 </style>
 </head>
 <body>
 <div class="app">
- <div class="header"><h1>九天廢話文學生成器 <span class="badge">V3</span></h1><p>事件因果＋最後一刀＋近期去重。全離線，不需要模型。</p></div>
+ <div class="header"><h1>九天廢話文學生成器 <span class="badge">V3.1</span></h1><p>事件因果＋九天笑點庫＋三路笑點生成。全離線，不需要模型。</p></div>
  <div class="card">
   <label>對方原話／主題</label><textarea id="topic" placeholder="貼上對方原話……"></textarea>
   <label style="margin-top:12px">風格</label>
@@ -54,7 +56,7 @@ button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:
   <div class="keywords" id="keywords"></div>
  </div>
  <div class="card"><label>生成結果</label><div class="output" id="output"></div></div>
- <div class="footer">V3：先理解事件的原因、動作與結果，再在最後一刀把邏輯拐進廢話。</div>
+ <div class="footer">V3.1：同一事件分三條笑路生成，避免三句只是換皮重複。</div>
 </div><div class="toast" id="toast">已複製</div>
 <script>
 const $=id=>document.getElementById(id), topicEl=$('topic'), output=$('output'), toast=$('toast'), keywordsEl=$('keywords');
@@ -140,6 +142,76 @@ function punch(c){
  ])
 }
 
+
+const JIUTIAN_HUMOR = {
+ evidence:[
+  c=>`原本「${cause(c)}」只是說法，等${result(c)}出現以後，這句話突然有了物證。`,
+  c=>`經現場實測，${cause(c)}確實值得注意。至於為什麼一定要用${result(c)}來驗證，目前仍在檢討實驗成本。`,
+  c=>`${result(c)}一出現，${cause(c)}就從個人意見升級成案例報告，連摘要都不用重寫。`,
+  c=>`本來還能懷疑${cause(c)}，直到${result(c)}親自到場，懷疑突然失去了主要工作。`
+ ],
+ blame:[
+  c=>`不要怪${cause(c)}，它從頭到尾也沒保證自己不會導向${result(c)}；真正勇敢的是大家居然願意替它做實測。`,
+  c=>`${cause(c)}其實很無辜，人家只是維持自己的狀態，是${action(c)}主動把事情推進到${result(c)}。`,
+  c=>`這件事不能全怪${cause(c)}。畢竟${result(c)}發生以前，大家都有充分時間相信它不會發生。`,
+  c=>`與其責怪${cause(c)}，不如尊重它的誠實：最後至少真的用${result(c)}證明自己沒有虛假宣傳。`
+ ],
+ redirect:[
+  c=>`${result(c)}以前大家都在研究${cause(c)}；${result(c)}以後，我覺得研究方向可以先改成${result(c)}。`,
+  c=>`事情走到${result(c)}這一步，${cause(c)}還重不重要可以晚點討論，現在比較值得確認的是事情為什麼已經走到這一步。`,
+  c=>`本來的問題是${cause(c)}，等${result(c)}出現後，恭喜，我們成功獲得了一個比原問題更新的問題。`,
+  c=>`${action(c)}之前焦點還在${cause(c)}；${result(c)}之後焦點沒消失，只是被迫換了一個比較急的焦點。`
+ ],
+ official:[
+  c=>`經初步調查：${cause(c)}為前置條件，${action(c)}為操作過程，${result(c)}為最終結果。本案最大突破，是終於知道結果欄要填什麼。`,
+  c=>`依現場資料研判，${cause(c)}與${result(c)}先後出現。相關單位表示，結果既已發生，後續將持續研究它為什麼已經發生。`,
+  c=>`本案經查，${action(c)}後確有${result(c)}情形。至於是否與${cause(c)}有關，目前最支持相關性的證據，就是它們剛好全在同一件事裡。`,
+  c=>`調查報告指出：${result(c)}發生率在發生前為零，發生後立即升至本案的一百％。`
+ ],
+ hindsight:[
+  c=>`${result(c)}發生以前，${cause(c)}叫提醒；${result(c)}發生以後，同一句話突然改名叫「我早就說過」。`,
+  c=>`事後回頭看，${cause(c)}確實很可疑；最大的證據就是我們現在正在事後回頭看。`,
+  c=>`如果早知道${result(c)}會發生，大家一定會更早知道；問題是通常要等它發生，才知道原來早知道比較好。`,
+  c=>`${action(c)}以前沒人能確定${result(c)}；現在能確定了，只是這份確定來得稍微晚了一點。`
+ ],
+ literal:[
+  c=>`${cause(c)}最大的問題，就是它真的${cause(c).includes('不夠')?'不太夠':'成了問題'}；${result(c)}最大的貢獻，就是把這句廢話變得突然很難反駁。`,
+  c=>`如果${result(c)}沒有發生，那它就是沒發生；現在既然發生了，最大的變化就是不能再使用前半句。`,
+  c=>`${action(c)}做完之後出現${result(c)}，這告訴我們一個重要道理：做完之前，確實還沒有做完。`,
+  c=>`少了${cause(c)}，這句話會少一個原因；少了${result(c)}，這件事至少會少一個結果。`
+ ],
+ meta:[
+  c=>`${cause(c)}跟${result(c)}誰比較重要我不知道，但少掉任何一個，這句廢話都會短很多。`,
+  c=>`我本來想深入分析${cause(c)}，後來看到${result(c)}，突然覺得深入之前先確認一下能不能安全回來。`,
+  c=>`這件事最完整的地方，是${cause(c)}、${action(c)}和${result(c)}一個都沒缺；缺的是一個比較正常的發展。`,
+  c=>`如果你覺得這段分析沒有幫助，至少它成功證明：沒有幫助的分析也可以分析得很完整。`
+ ]
+};
+
+const STRATEGY_NAMES={
+ evidence:'物證型', blame:'甩鍋型', redirect:'轉移焦點型',
+ official:'官方調查型', hindsight:'事後諸葛型', literal:'字面暴擊型', meta:'自我吐槽型'
+};
+
+const STYLE_STRATEGIES={
+ normal:['literal','hindsight','redirect','evidence'],
+ argue:['blame','redirect','evidence','meta'],
+ philo:['hindsight','literal','meta','redirect'],
+ science:['official','evidence','literal','redirect'],
+ mystic:['hindsight','meta','redirect','evidence'],
+ romance:['hindsight','redirect','meta','literal'],
+ god:['evidence','blame','redirect','official','hindsight','literal','meta']
+};
+
+function shuffled(a){return [...a].sort(()=>Math.random()-.5)}
+function threeStrategies(style){
+ const pool=STYLE_STRATEGIES[style]||STYLE_STRATEGIES.god;
+ return shuffled(pool).slice(0,3);
+}
+function humorLine(strategy,ctx){
+ const bank=JIUTIAN_HUMOR[strategy]||JIUTIAN_HUMOR.meta;
+ return chooseUnique(bank,ctx);
+}
 const B={
 normal:[
  c=>`${cause(c)}本來還只是一種狀態；等${action(c)}之後又出現${result(c)}，至少可以確定——事情確實沒有停在原地。`,
@@ -210,9 +282,37 @@ function context(raw){
 }
 function generateOne(ctx){return chooseUnique(B[style],ctx)}
 function generate(){
- const ctx=context(topicEl.value);
- const arr=[]; while(arr.length<3){let x=generateOne(ctx); if(!arr.includes(x))arr.push(x)}
- render(arr,ctx);
+ const raw=input.value.trim();
+ if(!raw){input.focus();return}
+ const c=context(raw);
+ const strategies=threeStrategies(style);
+ results.innerHTML='';
+ strategies.forEach(strategy=>{
+   const text=humorLine(strategy,c);
+   const card=document.createElement('div');
+   card.className='result';
+   const tag=document.createElement('div');
+   tag.className='strategy';
+   tag.textContent=STRATEGY_NAMES[strategy]||'九天型';
+   const p=document.createElement('div');
+   p.className='text';
+   p.textContent=text;
+   const actions=document.createElement('div');
+   actions.className='actions';
+   const copy=document.createElement('button');
+   copy.textContent='複製這句';
+   copy.onclick=()=>navigator.clipboard.writeText(text);
+   const swap=document.createElement('button');
+   swap.textContent='換一句';
+   swap.onclick=()=>{
+     const next=humorLine(strategy,c);
+     p.textContent=next;
+     copy.onclick=()=>navigator.clipboard.writeText(next);
+   };
+   actions.append(copy,swap);
+   card.append(tag,p,actions);
+   results.append(card);
+ });
 }
 function render(items,ctx){
  output.innerHTML='';

@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#111111" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="廢話生成器" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<title>廢話文學生成器</title>
+<style>
+:root{--bg:#0f0f10;--card:#19191c;--muted:#9a9aa1;--text:#f5f5f7;--line:#2b2b30;--accent:#ffffff;--danger:#ff6b6b}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC",sans-serif}
+.app{max-width:720px;margin:0 auto;padding:18px 14px calc(28px + env(safe-area-inset-bottom))}
+.header{padding:8px 2px 16px}.header h1{margin:0;font-size:28px;letter-spacing:-.5px}.header p{margin:7px 0 0;color:var(--muted);font-size:14px;line-height:1.45}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--muted);margin:0 0 8px}
+textarea,input,select{width:100%;border:1px solid var(--line);background:#111114;color:var(--text);border-radius:14px;font-size:17px;padding:13px 14px;outline:none}
+textarea{min-height:86px;resize:none;line-height:1.45}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:700;cursor:pointer}
+.primary{width:100%;background:var(--accent);color:#111;margin-top:12px;font-size:18px;padding:15px}
+.secondary{background:#27272c;color:var(--text);border:1px solid #34343a}
+.ghost{background:#202024;color:var(--text);border:1px solid #303036}
+.output{display:flex;flex-direction:column;gap:10px}
+.result{background:#111114;border:1px solid var(--line);border-radius:16px;padding:14px}
+.resultText{font-size:17px;line-height:1.6;white-space:pre-wrap;margin-bottom:12px}
+.actions{display:flex;gap:8px}.actions button{flex:1;padding:10px 12px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(18px);background:#fff;color:#111;padding:10px 14px;border-radius:999px;font-weight:700;opacity:0;pointer-events:none;transition:.18s;z-index:9}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.chips{display:flex;gap:8px;overflow:auto;padding-bottom:2px}.chip{white-space:nowrap;background:#232328;border:1px solid #303036;color:#ddd;padding:9px 11px;border-radius:999px;font-size:13px;font-weight:700}.chip.active{background:#f1f1f3;color:#111}
+.small{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.45}
+.footer{color:#777;font-size:12px;text-align:center;padding:10px 0 0}
+@media (max-width:430px){.app{padding-left:12px;padding-right:12px}.header h1{font-size:25px}.row{grid-template-columns:1fr 1fr}.resultText{font-size:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <h1>廢話文學生成器</h1>
+    <p>貼一句話、輸入主題，0.5 秒內生成 3 句。全離線，不需要模型。</p>
+  </div>
+
+  <div class="card">
+    <label for="topic">對方原話／主題</label>
+    <textarea id="topic" placeholder="例如：你整天研究這些賺到錢了嗎？"></textarea>
+
+    <label style="margin-top:12px">風格</label>
+    <div class="chips" id="chips">
+      <button class="chip active" data-style="normal">經典廢</button>
+      <button class="chip" data-style="philo">哲學廢</button>
+      <button class="chip" data-style="argue">回嘴廢</button>
+      <button class="chip" data-style="science">研究廢</button>
+      <button class="chip" data-style="mystic">高深廢</button>
+    </div>
+
+    <div class="row">
+      <button class="secondary" id="sampleBtn">換個範例</button>
+      <button class="ghost" id="clearBtn">清空</button>
+    </div>
+    <button class="primary" id="generateBtn">生成 3 句</button>
+    <div class="small">提示：完全在手機瀏覽器本機運作。加入主畫面後可當成小 App 使用。</div>
+  </div>
+
+  <div class="card">
+    <label>生成結果</label>
+    <div class="output" id="output"></div>
+  </div>
+
+  <div class="footer">廢話的最高境界：句句成立，毫無幫助。</div>
+</div>
+<div class="toast" id="toast">已複製</div>
+
+<script>
+const topicEl = document.getElementById('topic');
+const output = document.getElementById('output');
+const toast = document.getElementById('toast');
+let style = 'normal';
+
+const samples = [
+  '你整天研究這些賺到錢了嗎？',
+  '你是不是有病？',
+  '你到底在講什麼？',
+  '你怎麼又熬夜？',
+  '你這樣做有什麼意義？',
+  '你是不是想太多了？',
+  '你到底懂不懂？',
+  '你為什麼不早點說？'
+];
+
+const generic = {
+ normal: [
+  '如果你現在在問「{q}」，至少可以確定，你確實問了這個問題。',
+  '這件事之所以會變成這樣，主要是因為它最後真的變成了這樣。',
+  '如果結果還沒出來，那目前最大的結果就是還沒有結果。',
+  '你說得很有道理，尤其是有道理的那一部分。',
+  '能遇到這種情況，通常代表這種情況確實發生了。',
+  '事情到底是不是這樣，最後還是要看它到底是不是這樣。',
+  '如果我沒理解錯，那我目前的理解應該還沒有完全錯。'
+ ],
+ philo: [
+  '真正的答案，往往藏在答案出現之後。至於「{q}」，你現在已經開始接近問題本身。',
+  '當你開始追問「{q}」，你首先得到的，就是一個正在追問的人。',
+  '不是所有問題都有答案，但有答案的問題通常都曾經是問題。',
+  '你以為你在尋找結論，其實你至少已經找到了尋找結論這件事。',
+  '放下問題之前，問題通常還在；放下之後，至少手上少了一個問題。',
+  '有些道理一旦懂了，你就會發現自己懂了。沒懂之前，通常還不懂。'
+ ],
+ argue: [
+  '你要這麼理解當然可以，因為你現在確實就是這麼理解的。',
+  '我沒有迴避「{q}」，我只是還沒有用你期待的方式回答它。',
+  '你先別急，急了之後通常只會比現在更急。',
+  '我尊重你的看法，畢竟這確實是你的看法，不是我的。',
+  '你說我沒回答也不算錯，因為我確實還沒有回答成你想要的答案。',
+  '如果你堅持你是對的，那至少可以確定，你現在非常堅持。',
+  '你問得很好，下次如果還想問，也可以再問一次。'
+ ],
+ science: [
+  '根據長期觀察，會問「{q}」的人，通常都已經把這句話問出口了。',
+  '研究顯示，問題沒有解決之前，問題的未解決率通常偏高。',
+  '統計上來說，事情一旦發生，發生率就會明顯高於沒發生之前。',
+  '實驗發現，只要沒有得到答案，受試者通常仍然處於沒有得到答案的狀態。',
+  '目前沒有證據證明這件事沒發生，尤其是在它已經發生的情況下。',
+  '多項觀察指出，知道的人通常知道，不知道的人知道的比例相對較低。'
+ ],
+ mystic: [
+  '你看到的未必只是你看到的，但你沒看到的，目前確實沒有被你看到。',
+  '「{q}」真正的答案不在遠方，它首先存在於這個問題已經被說出口的事實裡。',
+  '當你凝視問題，問題也仍然是一個問題。',
+  '真正的沉默不是沒有聲音，而是沒有把話說出來。',
+  '你若執著答案，答案就是答案；你若放下答案，至少你先放下了一個答案。',
+  '萬事皆有因果，有結果的事情，通常至少已經有了結果。'
+ ]
+};
+
+function compact(s){return s.replace(/\s+/g,' ').trim();}
+function q(s){return compact(s).replace(/[。！？!?]+$/,'') || '這件事';}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function shuffle(arr){return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]);}
+
+function generate(){
+  const raw = q(topicEl.value);
+  const pool = shuffle(generic[style]);
+  const results = [];
+  for(let i=0;i<3;i++) results.push(pool[i % pool.length].replaceAll('{q}', raw));
+  render(results);
+}
+
+function render(items){
+  output.innerHTML='';
+  items.forEach((text,idx)=>{
+    const box=document.createElement('div'); box.className='result';
+    const t=document.createElement('div'); t.className='resultText'; t.textContent=text;
+    const a=document.createElement('div'); a.className='actions';
+    const copy=document.createElement('button'); copy.className='secondary'; copy.textContent='複製這句';
+    copy.onclick=()=>copyText(text);
+    const again=document.createElement('button'); again.className='ghost'; again.textContent='換一句';
+    again.onclick=()=>{ const next=pick(generic[style]).replaceAll('{q}',q(topicEl.value)); t.textContent=next; copy.onclick=()=>copyText(next); };
+    a.append(copy,again); box.append(t,a); output.append(box);
+  });
+}
+
+async function copyText(text){
+  try{await navigator.clipboard.writeText(text);}catch(e){
+    const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
+  }
+  toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),900);
+}
+
+document.getElementById('generateBtn').onclick=generate;
+document.getElementById('clearBtn').onclick=()=>{topicEl.value='';topicEl.focus();};
+document.getElementById('sampleBtn').onclick=()=>{topicEl.value=pick(samples);generate();};
+document.getElementById('chips').addEventListener('click',e=>{if(!e.target.classList.contains('chip'))return;document.querySelectorAll('.chip').forEach(x=>x.classList.remove('active'));e.target.classList.add('active');style=e.target.dataset.style;generate();});
+topicEl.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter')generate();});
+
+topicEl.value='你整天研究這些賺到錢了嗎？';
+generate();
+</script>
+<script>
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
+</script>
+</body>
+</html>

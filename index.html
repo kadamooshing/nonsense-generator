@@ -41,7 +41,7 @@ button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:
 </head>
 <body>
 <div class="app">
- <div class="header"><h1>九天廢話文學生成器 <span class="badge">V3.1</span></h1><p>事件因果＋九天笑點庫＋三路笑點生成。全離線，不需要模型。</p></div>
+ <div class="header"><h1>九天廢話文學生成器 <span class="badge">V3.1.1</span></h1><p>事件因果＋九天笑點庫＋三路笑點生成。全離線，不需要模型。</p></div>
  <div class="card">
   <label>對方原話／主題</label><textarea id="topic" placeholder="貼上對方原話……"></textarea>
   <label style="margin-top:12px">風格</label>
@@ -56,7 +56,7 @@ button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:
   <div class="keywords" id="keywords"></div>
  </div>
  <div class="card"><label>生成結果</label><div class="output" id="output"></div></div>
- <div class="footer">V3.1：同一事件分三條笑路生成，避免三句只是換皮重複。</div>
+ <div class="footer">V3.1.1：修正三路笑點生成按鈕，保留事件因果與九天笑點庫。</div>
 </div><div class="toast" id="toast">已複製</div>
 <script>
 const $=id=>document.getElementById(id), topicEl=$('topic'), output=$('output'), toast=$('toast'), keywordsEl=$('keywords');
@@ -282,36 +282,48 @@ function context(raw){
 }
 function generateOne(ctx){return chooseUnique(B[style],ctx)}
 function generate(){
- const raw=input.value.trim();
- if(!raw){input.focus();return}
+ const raw=topicEl.value.trim();
+ if(!raw){topicEl.focus();return}
  const c=context(raw);
  const strategies=threeStrategies(style);
- results.innerHTML='';
+ output.innerHTML='';
  strategies.forEach(strategy=>{
-   const text=humorLine(strategy,c);
-   const card=document.createElement('div');
-   card.className='result';
+   let text=humorLine(strategy,c);
+   const box=document.createElement('div');
+   box.className='result';
+
    const tag=document.createElement('div');
    tag.className='strategy';
    tag.textContent=STRATEGY_NAMES[strategy]||'九天型';
-   const p=document.createElement('div');
-   p.className='text';
-   p.textContent=text;
+
+   const t=document.createElement('div');
+   t.className='resultText';
+   t.textContent=text;
+
    const actions=document.createElement('div');
    actions.className='actions';
-   const copy=document.createElement('button');
-   copy.textContent='複製這句';
-   copy.onclick=()=>navigator.clipboard.writeText(text);
-   const swap=document.createElement('button');
-   swap.textContent='換一句';
-   swap.onclick=()=>{
-     const next=humorLine(strategy,c);
-     p.textContent=next;
-     copy.onclick=()=>navigator.clipboard.writeText(next);
+
+   const cp=document.createElement('button');
+   cp.className='secondary';
+   cp.textContent='複製這句';
+
+   const ag=document.createElement('button');
+   ag.className='ghost';
+   ag.textContent='換一句';
+
+   const bind=x=>{
+     cp.onclick=()=>copyText(x);
+     ag.onclick=()=>{
+       const n=humorLine(strategy,c);
+       t.textContent=n;
+       bind(n);
+     };
    };
-   actions.append(copy,swap);
-   card.append(tag,p,actions);
-   results.append(card);
+   bind(text);
+
+   actions.append(cp,ag);
+   box.append(tag,t,actions);
+   output.append(box);
  });
 }
 function render(items,ctx){

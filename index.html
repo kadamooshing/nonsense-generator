@@ -37,11 +37,22 @@ button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:
 }
 
 .strategy{display:inline-block;margin-bottom:8px;padding:4px 9px;border:1px solid #3a3a42;border-radius:999px;font-size:12px;color:#aaa}
+
+.logbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.logbar button{flex:1;min-width:120px}
+.rate{display:flex;gap:8px;margin-top:8px}
+.rate button{flex:0 0 auto;padding:8px 12px}
+.logpanel{margin-top:14px;padding:14px;border:1px solid #2f3036;border-radius:16px;background:#15161a}
+.logpanel h3{margin:0 0 10px}
+.logstats{font-size:13px;color:#999;margin-bottom:10px}
+.logitem{padding:10px 0;border-top:1px solid #2b2c31;font-size:13px}
+.logitem:first-of-type{border-top:0}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
 <div class="app">
- <div class="header"><h1>九天廢話文學生成器 <span class="badge">V3.1.1</span></h1><p>事件因果＋九天笑點庫＋三路笑點生成。全離線，不需要模型。</p></div>
+ <div class="header"><h1>九天廢話文學生成器 <span class="badge">V3.2</span></h1><p>事件因果＋九天笑點庫＋實戰 Log。全離線，資料只存在本機。</p></div>
  <div class="card">
   <label>對方原話／主題</label><textarea id="topic" placeholder="貼上對方原話……"></textarea>
   <label style="margin-top:12px">風格</label>
@@ -56,7 +67,19 @@ button{border:0;border-radius:14px;padding:13px 14px;font-size:16px;font-weight:
   <div class="keywords" id="keywords"></div>
  </div>
  <div class="card"><label>生成結果</label><div class="output" id="output"></div></div>
- <div class="footer">V3.1.1：修正三路笑點生成按鈕，保留事件因果與九天笑點庫。</div>
+ 
+<div class="logpanel">
+  <h3>實戰 Log</h3>
+  <div id="logStats" class="logstats">尚未載入紀錄</div>
+  <div class="logbar">
+    <button id="viewLogBtn" class="secondary">查看紀錄</button>
+    <button id="exportJsonBtn" class="secondary">匯出 JSON</button>
+    <button id="exportCsvBtn" class="secondary">匯出 CSV</button>
+    <button id="clearLogBtn" class="ghost">清除紀錄</button>
+  </div>
+  <div id="logList" class="hidden"></div>
+</div>
+<div class="footer">V3.2：實戰 Log 自動記錄輸入、事件鏈、風格、三路結果與 👍👎 評分。</div>
 </div><div class="toast" id="toast">已複製</div>
 <script>
 const $=id=>document.getElementById(id), topicEl=$('topic'), output=$('output'), toast=$('toast'), keywordsEl=$('keywords');
@@ -281,49 +304,110 @@ function context(raw){
  return ctx;
 }
 function generateOne(ctx){return chooseUnique(B[style],ctx)}
+
+const LOG_KEY='jiutian_v32_battle_log';
+let currentLogId=null;
+
+function loadLogs(){
+ try{return JSON.parse(localStorage.getItem(LOG_KEY)||'[]')}catch(e){return []}
+}
+function saveLogs(logs){
+ try{localStorage.setItem(LOG_KEY,JSON.stringify(logs.slice(-500)))}catch(e){}
+ updateLogStats();
+}
+function addBattleLog(ctx,strategies,items){
+ const logs=loadLogs();
+ const rec={
+   id:Date.now()+'-'+Math.random().toString(36).slice(2,7),
+   time:new Date().toISOString(),
+   input:ctx.raw,
+   style:style,
+   styleName:({normal:'經典廢',argue:'回嘴廢',philo:'哲學廢',science:'研究廢',mystic:'高深廢',romance:'浪漫廢',god:'神級廢'})[style]||style,
+   eventChain:{...ctx.event.slots},
+   results:items.map((text,i)=>({strategy:strategies[i],strategyName:STRATEGY_NAMES[strategies[i]]||strategies[i],text,rating:0,copied:false,swaps:0}))
+ };
+ logs.push(rec); saveLogs(logs); currentLogId=rec.id; return rec.id;
+}
+function patchResult(logId,index,patch){
+ const logs=loadLogs(), rec=logs.find(x=>x.id===logId);
+ if(!rec||!rec.results[index])return;
+ Object.assign(rec.results[index],patch);
+ saveLogs(logs);
+}
+function rateResult(logId,index,rating){
+ patchResult(logId,index,{rating});
+}
+function markCopied(logId,index){patchResult(logId,index,{copied:true})}
+function markSwap(logId,index,text){
+ const logs=loadLogs(),rec=logs.find(x=>x.id===logId);
+ if(!rec||!rec.results[index])return;
+ rec.results[index].text=text;
+ rec.results[index].swaps=(rec.results[index].swaps||0)+1;
+ rec.results[index].rating=0;
+ saveLogs(logs);
+}
+function updateLogStats(){
+ const el=document.getElementById('logStats'); if(!el)return;
+ const logs=loadLogs(), rs=logs.flatMap(x=>x.results||[]);
+ const up=rs.filter(x=>x.rating===1).length, down=rs.filter(x=>x.rating===-1).length, copied=rs.filter(x=>x.copied).length;
+ el.textContent=`共 ${logs.length} 次生成／${rs.length} 句｜👍 ${up}｜👎 ${down}｜已複製 ${copied}`;
+}
+function renderLogList(){
+ const box=document.getElementById('logList'), logs=loadLogs().slice().reverse().slice(0,30);
+ box.innerHTML='';
+ logs.forEach(r=>{
+   const d=document.createElement('div'); d.className='logitem';
+   const chain=[r.eventChain?.cause,r.eventChain?.action,r.eventChain?.result].filter(Boolean).join(' → ');
+   d.textContent=`${new Date(r.time).toLocaleString()}｜${r.styleName}｜${r.input}${chain?'｜'+chain:''}`;
+   box.append(d);
+ });
+ box.classList.remove('hidden');
+}
+function downloadText(filename,text,type){
+ const blob=new Blob([text],{type}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),500);
+}
+function exportJSON(){
+ downloadText(`九天實戰Log_${new Date().toISOString().slice(0,10)}.json`,JSON.stringify(loadLogs(),null,2),'application/json;charset=utf-8');
+}
+function csvEsc(v){return '"'+String(v??'').replace(/"/g,'""')+'"'}
+function exportCSV(){
+ const rows=[['時間','原句','風格','原因狀態','動作','結果','笑點策略','生成句','評分','已複製','換句次數']];
+ loadLogs().forEach(r=>(r.results||[]).forEach(x=>rows.push([
+   r.time,r.input,r.styleName,r.eventChain?.cause||'',r.eventChain?.action||'',r.eventChain?.result||'',
+   x.strategyName,x.text,x.rating===1?'👍':x.rating===-1?'👎':'',x.copied?'是':'否',x.swaps||0
+ ])));
+ downloadText(`九天實戰Log_${new Date().toISOString().slice(0,10)}.csv`,'\ufeff'+rows.map(row=>row.map(csvEsc).join(',')).join('\n'),'text/csv;charset=utf-8');
+}
+function clearLogs(){
+ if(confirm('確定清除所有實戰 Log？此動作無法復原。')){localStorage.removeItem(LOG_KEY);currentLogId=null;updateLogStats();const b=document.getElementById('logList');if(b){b.innerHTML='';b.classList.add('hidden')}}
+}
 function generate(){
  const raw=topicEl.value.trim();
  if(!raw){topicEl.focus();return}
  const c=context(raw);
  const strategies=threeStrategies(style);
+ const texts=strategies.map(strategy=>humorLine(strategy,c));
+ const logId=addBattleLog(c,strategies,texts);
  output.innerHTML='';
- strategies.forEach(strategy=>{
-   let text=humorLine(strategy,c);
-   const box=document.createElement('div');
-   box.className='result';
-
-   const tag=document.createElement('div');
-   tag.className='strategy';
-   tag.textContent=STRATEGY_NAMES[strategy]||'九天型';
-
-   const t=document.createElement('div');
-   t.className='resultText';
-   t.textContent=text;
-
-   const actions=document.createElement('div');
-   actions.className='actions';
-
-   const cp=document.createElement('button');
-   cp.className='secondary';
-   cp.textContent='複製這句';
-
-   const ag=document.createElement('button');
-   ag.className='ghost';
-   ag.textContent='換一句';
-
-   const bind=x=>{
-     cp.onclick=()=>copyText(x);
-     ag.onclick=()=>{
-       const n=humorLine(strategy,c);
-       t.textContent=n;
-       bind(n);
-     };
-   };
-   bind(text);
-
+ strategies.forEach((strategy,index)=>{
+   let text=texts[index];
+   const box=document.createElement('div'); box.className='result';
+   const tag=document.createElement('div'); tag.className='strategy'; tag.textContent=STRATEGY_NAMES[strategy]||'九天型';
+   const t=document.createElement('div'); t.className='resultText'; t.textContent=text;
+   const rate=document.createElement('div'); rate.className='rate';
+   const up=document.createElement('button'); up.className='ghost'; up.textContent='👍 好笑';
+   const down=document.createElement('button'); down.className='ghost'; down.textContent='👎 不行';
+   up.onclick=()=>{rateResult(logId,index,1);up.textContent='👍 已記錄';down.textContent='👎 不行'};
+   down.onclick=()=>{rateResult(logId,index,-1);down.textContent='👎 已記錄';up.textContent='👍 好笑'};
+   rate.append(up,down);
+   const actions=document.createElement('div'); actions.className='actions';
+   const cp=document.createElement('button'); cp.className='secondary'; cp.textContent='複製這句';
+   const ag=document.createElement('button'); ag.className='ghost'; ag.textContent='換一句';
+   cp.onclick=()=>{copyText(text);markCopied(logId,index)};
+   ag.onclick=()=>{text=humorLine(strategy,c);t.textContent=text;markSwap(logId,index,text);up.textContent='👍 好笑';down.textContent='👎 不行'};
    actions.append(cp,ag);
-   box.append(tag,t,actions);
-   output.append(box);
+   box.append(tag,t,rate,actions); output.append(box);
  });
 }
 function render(items,ctx){
@@ -351,4 +435,11 @@ topicEl.value='我忘記了，你那個繩子不夠力，頭放下去結果身�
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
+
+document.getElementById('viewLogBtn')?.addEventListener('click',renderLogList);
+document.getElementById('exportJsonBtn')?.addEventListener('click',exportJSON);
+document.getElementById('exportCsvBtn')?.addEventListener('click',exportCSV);
+document.getElementById('clearLogBtn')?.addEventListener('click',clearLogs);
+updateLogStats();
+
 </script></body></html>
